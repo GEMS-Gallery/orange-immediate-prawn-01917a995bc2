@@ -33,4 +33,5 @@ service : {
   getCategories: () -> (vec Category) query;
   getReplies: (TopicId) -> (vec Reply) query;
   getTopics: (CategoryId) -> (vec Topic) query;
+  healthCheck: () -> (text) query;
 }

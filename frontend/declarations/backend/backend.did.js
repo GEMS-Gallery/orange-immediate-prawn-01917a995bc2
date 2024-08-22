@@ -39,6 +39,7 @@ export const idlFactory = ({ IDL }) => {
     'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
     'getReplies' : IDL.Func([TopicId], [IDL.Vec(Reply)], ['query']),
     'getTopics' : IDL.Func([CategoryId], [IDL.Vec(Topic)], ['query']),
+    'healthCheck' : IDL.Func([], [IDL.Text], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

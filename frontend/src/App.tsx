@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
-import { backend } from 'declarations/backend';
-import { Box, Card, CardContent, Typography, Grid, Icon, CircularProgress } from '@mui/material';
+import { Actor, HttpAgent } from '@dfinity/agent';
+import { idlFactory } from 'declarations/backend/backend.did.js';
+import { _SERVICE } from 'declarations/backend/backend.did';
+import { Box, Card, CardContent, Typography, Grid, Icon, CircularProgress, Snackbar } from '@mui/material';
 import * as Icons from '@mui/icons-material';
 
 interface Category {
@@ -27,6 +29,9 @@ interface Reply {
   createdAt: bigint;
 }
 
+const agent = new HttpAgent();
+const backend = Actor.createActor<_SERVICE>(idlFactory, { agent, canisterId: process.env.BACKEND_CANISTER_ID });
+
 const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [hasError, setHasError] = useState(false);
 
@@ -51,6 +56,7 @@ const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -63,6 +69,7 @@ const Home: React.FC = () => {
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError('Failed to fetch categories. Please try again.');
+        setSnackbarOpen(true);
       } finally {
         setLoading(false);
       }
@@ -70,8 +77,19 @@ const Home: React.FC = () => {
     fetchCategories();
   }, []);
 
+  const retryFetch = () => {
+    setError(null);
+    setLoading(true);
+    fetchCategories();
+  };
+
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
-  if (error) return <Box>{error}</Box>;
+  if (error) return (
+    <Box>
+      {error}
+      <button onClick={retryFetch}>Retry</button>
+    </Box>
+  );
 
   return (
     <Box className="container">
@@ -93,6 +111,12 @@ const Home: React.FC = () => {
           </Grid>
         ))}
       </Grid>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        message="Error fetching data. Please check your connection and try again."
+      />
     </Box>
   );
 };

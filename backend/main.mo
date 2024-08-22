@@ -138,6 +138,11 @@ actor {
     id
   };
 
+  // Health check
+  public query func healthCheck() : async Text {
+    "OK"
+  };
+
   // System functions
   system func preupgrade() {
     categoriesEntries := Iter.toArray(categories.entries());
