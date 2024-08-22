@@ -53,14 +53,22 @@ actor {
   var replies = HashMap.HashMap<ReplyId, Reply>(1000, Text.equal, Text.hash);
 
   // Initialize data
-  public func initializeDefaultCategories() : async () {
+  func initializeDefaultCategories() {
     let defaultCategories = [
-      { id = generateId("category"); name = "Web Hacking"; description = "Discuss web application vulnerabilities and exploitation techniques." },
-      { id = generateId("category"); name = "Network Security"; description = "Explore network security concepts and tools." },
-      { id = generateId("category"); name = "Cryptography"; description = "Dive into encryption algorithms and cryptographic protocols." },
+      { id = generateId("category"); name = "Web Application Security"; description = "Discuss vulnerabilities and security measures in web applications." },
+      { id = generateId("category"); name = "Network Penetration Testing"; description = "Share techniques and tools for network penetration testing." },
+      { id = generateId("category"); name = "Malware Analysis"; description = "Analyze and discuss various types of malware and their behaviors." },
+      { id = generateId("category"); name = "Cryptography"; description = "Explore encryption algorithms, protocols, and their implementations." },
+      { id = generateId("category"); name = "Social Engineering"; description = "Discuss psychological manipulation techniques used in hacking." }
     ];
     for (category in defaultCategories.vals()) {
       categories.put(category.id, category);
+    };
+  };
+
+  public func ensureDefaultCategories() : async () {
+    if (categories.size() == 0) {
+      initializeDefaultCategories();
     };
   };
 
@@ -135,6 +143,9 @@ actor {
   };
 
   system func postupgrade() {
+    categories := HashMap.fromIter<CategoryId, Category>(categoriesEntries.vals(), 10, Text.equal, Text.hash);
+    topics := HashMap.fromIter<TopicId, Topic>(topicsEntries.vals(), 100, Text.equal, Text.hash);
+    replies := HashMap.fromIter<ReplyId, Reply>(repliesEntries.vals(), 1000, Text.equal, Text.hash);
     categoriesEntries := [];
     topicsEntries := [];
     repliesEntries := [];

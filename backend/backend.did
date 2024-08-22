@@ -28,8 +28,8 @@ service : {
   createCategory: (text, text) -> (CategoryId);
   createReply: (TopicId, text, opt ReplyId) -> (ReplyId);
   createTopic: (CategoryId, text, text) -> (TopicId);
+  ensureDefaultCategories: () -> ();
   getCategories: () -> (vec Category) query;
   getReplies: (TopicId) -> (vec Reply) query;
   getTopics: (CategoryId) -> (vec Topic) query;
-  initializeDefaultCategories: () -> ();
 }

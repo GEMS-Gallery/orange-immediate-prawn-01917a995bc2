@@ -30,10 +30,10 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createTopic' : IDL.Func([CategoryId, IDL.Text, IDL.Text], [TopicId], []),
+    'ensureDefaultCategories' : IDL.Func([], [], []),
     'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
     'getReplies' : IDL.Func([TopicId], [IDL.Vec(Reply)], ['query']),
     'getTopics' : IDL.Func([CategoryId], [IDL.Vec(Topic)], ['query']),
-    'initializeDefaultCategories' : IDL.Func([], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

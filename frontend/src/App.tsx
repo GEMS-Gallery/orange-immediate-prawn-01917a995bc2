@@ -34,6 +34,7 @@ const Home: React.FC = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
+        await backend.ensureDefaultCategories();
         const result = await backend.getCategories();
         setCategories(result);
         setError(null);
