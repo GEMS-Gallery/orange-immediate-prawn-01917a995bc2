@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { backend } from 'declarations/backend';
 
 interface Category {
@@ -26,14 +26,39 @@ interface Reply {
 
 const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const result = await backend.getCategories();
-      setCategories(result);
+      try {
+        setLoading(true);
+        const result = await backend.getCategories();
+        setCategories(result);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch categories. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchCategories();
   }, []);
+
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const categoryId = await backend.createCategory(newCategory.name, newCategory.description);
+      setCategories([...categories, { ...newCategory, id: categoryId }]);
+      setNewCategory({ name: '', description: '' });
+    } catch (err) {
+      setError('Failed to create category. Please try again.');
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="container">
@@ -50,28 +75,61 @@ const Home: React.FC = () => {
           </div>
         ))}
       </div>
+      <form onSubmit={handleCreateCategory}>
+        <h3>Create New Category</h3>
+        <input
+          type="text"
+          placeholder="Category Name"
+          value={newCategory.name}
+          onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+        />
+        <textarea
+          placeholder="Category Description"
+          value={newCategory.description}
+          onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+        />
+        <button type="submit">Create Category</button>
+      </form>
     </div>
   );
 };
 
-const Category: React.FC<{ categoryId: string }> = ({ categoryId }) => {
+const Category: React.FC = () => {
+  const { categoryId } = useParams<{ categoryId: string }>();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [newTopic, setNewTopic] = useState({ title: '', content: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTopics = async () => {
-      const result = await backend.getTopics(categoryId);
-      setTopics(result);
+      try {
+        setLoading(true);
+        const result = await backend.getTopics(categoryId!);
+        setTopics(result);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch topics. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchTopics();
   }, [categoryId]);
 
   const handleCreateTopic = async (e: React.FormEvent) => {
     e.preventDefault();
-    const topicId = await backend.createTopic(categoryId, newTopic.title, newTopic.content);
-    setTopics([...topics, { ...newTopic, id: topicId, categoryId, createdAt: BigInt(Date.now()) }]);
-    setNewTopic({ title: '', content: '' });
+    try {
+      const topicId = await backend.createTopic(categoryId!, newTopic.title, newTopic.content);
+      setTopics([...topics, { ...newTopic, id: topicId, categoryId: categoryId!, createdAt: BigInt(Date.now()) }]);
+      setNewTopic({ title: '', content: '' });
+    } catch (err) {
+      setError('Failed to create topic. Please try again.');
+    }
   };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="container">
@@ -86,6 +144,7 @@ const Category: React.FC<{ categoryId: string }> = ({ categoryId }) => {
         ))}
       </div>
       <form onSubmit={handleCreateTopic}>
+        <h3>Create New Topic</h3>
         <input
           type="text"
           placeholder="Topic Title"
@@ -103,23 +162,38 @@ const Category: React.FC<{ categoryId: string }> = ({ categoryId }) => {
   );
 };
 
-const Topic: React.FC<{ topicId: string }> = ({ topicId }) => {
+const Topic: React.FC = () => {
+  const { topicId } = useParams<{ topicId: string }>();
   const [replies, setReplies] = useState<Reply[]>([]);
   const [newReply, setNewReply] = useState({ content: '', parentReplyId: null });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReplies = async () => {
-      const result = await backend.getReplies(topicId);
-      setReplies(result);
+      try {
+        setLoading(true);
+        const result = await backend.getReplies(topicId!);
+        setReplies(result);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch replies. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchReplies();
   }, [topicId]);
 
   const handleCreateReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    const replyId = await backend.createReply(topicId, newReply.content, newReply.parentReplyId);
-    setReplies([...replies, { ...newReply, id: replyId, topicId, createdAt: BigInt(Date.now()) }]);
-    setNewReply({ content: '', parentReplyId: null });
+    try {
+      const replyId = await backend.createReply(topicId!, newReply.content, newReply.parentReplyId);
+      setReplies([...replies, { ...newReply, id: replyId, topicId: topicId!, createdAt: BigInt(Date.now()) }]);
+      setNewReply({ content: '', parentReplyId: null });
+    } catch (err) {
+      setError('Failed to create reply. Please try again.');
+    }
   };
 
   const renderReplies = (parentId: string | null = null, depth: number = 0): JSX.Element => (
@@ -138,11 +212,15 @@ const Topic: React.FC<{ topicId: string }> = ({ topicId }) => {
     </div>
   );
 
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
   return (
     <div className="container">
       <h2>Replies</h2>
       {renderReplies()}
       <form onSubmit={handleCreateReply}>
+        <h3>Post a Reply</h3>
         <textarea
           placeholder="Your Reply"
           value={newReply.content}
@@ -158,8 +236,8 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/category/:categoryId" element={<Category categoryId="" />} />
-      <Route path="/topic/:topicId" element={<Topic topicId="" />} />
+      <Route path="/category/:categoryId" element={<Category />} />
+      <Route path="/topic/:topicId" element={<Topic />} />
     </Routes>
   );
 };

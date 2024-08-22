@@ -1,7 +1,7 @@
 export const idlFactory = ({ IDL }) => {
+  const CategoryId = IDL.Text;
   const TopicId = IDL.Text;
   const ReplyId = IDL.Text;
-  const CategoryId = IDL.Text;
   const Category = IDL.Record({
     'id' : CategoryId,
     'name' : IDL.Text,
@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
     'createdAt' : Time,
   });
   return IDL.Service({
+    'createCategory' : IDL.Func([IDL.Text, IDL.Text], [CategoryId], []),
     'createReply' : IDL.Func(
         [TopicId, IDL.Text, IDL.Opt(ReplyId)],
         [ReplyId],
@@ -32,6 +33,7 @@ export const idlFactory = ({ IDL }) => {
     'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
     'getReplies' : IDL.Func([TopicId], [IDL.Vec(Reply)], ['query']),
     'getTopics' : IDL.Func([CategoryId], [IDL.Vec(Topic)], ['query']),
+    'initializeDefaultCategories' : IDL.Func([], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

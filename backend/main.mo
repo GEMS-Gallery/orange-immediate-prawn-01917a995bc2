@@ -53,14 +53,15 @@ actor {
   var replies = HashMap.HashMap<ReplyId, Reply>(1000, Text.equal, Text.hash);
 
   // Initialize data
-  for ((id, category) in categoriesEntries.vals()) {
-    categories.put(id, category);
-  };
-  for ((id, topic) in topicsEntries.vals()) {
-    topics.put(id, topic);
-  };
-  for ((id, reply) in repliesEntries.vals()) {
-    replies.put(id, reply);
+  public func initializeDefaultCategories() : async () {
+    let defaultCategories = [
+      { id = generateId("category"); name = "Web Hacking"; description = "Discuss web application vulnerabilities and exploitation techniques." },
+      { id = generateId("category"); name = "Network Security"; description = "Explore network security concepts and tools." },
+      { id = generateId("category"); name = "Cryptography"; description = "Dive into encryption algorithms and cryptographic protocols." },
+    ];
+    for (category in defaultCategories.vals()) {
+      categories.put(category.id, category);
+    };
   };
 
   // Helper functions
@@ -77,6 +78,17 @@ actor {
   // Public functions
   public query func getCategories() : async [Category] {
     Iter.toArray(categories.vals())
+  };
+
+  public shared func createCategory(name: Text, description: Text) : async CategoryId {
+    let id = generateId("category");
+    let category: Category = {
+      id = id;
+      name = name;
+      description = description;
+    };
+    categories.put(id, category);
+    id
   };
 
   public query func getTopics(categoryId: CategoryId) : async [Topic] {

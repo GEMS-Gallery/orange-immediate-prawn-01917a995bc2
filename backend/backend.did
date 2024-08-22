@@ -25,9 +25,11 @@ type Category =
    name: text;
  };
 service : {
+  createCategory: (text, text) -> (CategoryId);
   createReply: (TopicId, text, opt ReplyId) -> (ReplyId);
   createTopic: (CategoryId, text, text) -> (TopicId);
   getCategories: () -> (vec Category) query;
   getReplies: (TopicId) -> (vec Reply) query;
   getTopics: (CategoryId) -> (vec Topic) query;
+  initializeDefaultCategories: () -> ();
 }
