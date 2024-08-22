@@ -34,7 +34,7 @@ export interface _SERVICE {
   'getCategories' : ActorMethod<[], Array<Category>>,
   'getReplies' : ActorMethod<[TopicId], Array<Reply>>,
   'getTopics' : ActorMethod<[CategoryId], Array<Topic>>,
-  'healthCheck' : ActorMethod<[], string>,
+  'ping' : ActorMethod<[], string>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

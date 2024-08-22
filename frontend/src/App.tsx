@@ -3,7 +3,7 @@ import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from 'declarations/backend/backend.did.js';
 import { _SERVICE } from 'declarations/backend/backend.did';
-import { Box, Card, CardContent, Typography, Grid, Icon, CircularProgress, Snackbar } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Icon, CircularProgress, Snackbar, Button } from '@mui/material';
 import * as Icons from '@mui/icons-material';
 
 interface Category {
@@ -52,14 +52,42 @@ const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return <>{children}</>;
 };
 
+const useBackendConnection = () => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const result = await backend.ping();
+        setIsConnected(result === 'pong');
+      } catch (error) {
+        console.error('Backend connection error:', error);
+        setIsConnected(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return { isConnected, isLoading };
+};
+
 const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const { isConnected, isLoading } = useBackendConnection();
 
   useEffect(() => {
     const fetchCategories = async () => {
+      if (!isConnected) return;
       try {
         setLoading(true);
         await backend.ensureDefaultCategories();
@@ -75,7 +103,7 @@ const Home: React.FC = () => {
       }
     };
     fetchCategories();
-  }, []);
+  }, [isConnected]);
 
   const retryFetch = () => {
     setError(null);
@@ -83,11 +111,13 @@ const Home: React.FC = () => {
     fetchCategories();
   };
 
+  if (isLoading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
+  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return (
     <Box>
       {error}
-      <button onClick={retryFetch}>Retry</button>
+      <Button onClick={retryFetch}>Retry</Button>
     </Box>
   );
 
@@ -127,9 +157,11 @@ const Category: React.FC = () => {
   const [newTopic, setNewTopic] = useState({ title: '', content: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isConnected } = useBackendConnection();
 
   useEffect(() => {
     const fetchTopics = async () => {
+      if (!isConnected) return;
       try {
         setLoading(true);
         const result = await backend.getTopics(categoryId!);
@@ -143,10 +175,14 @@ const Category: React.FC = () => {
       }
     };
     fetchTopics();
-  }, [categoryId]);
+  }, [categoryId, isConnected]);
 
   const handleCreateTopic = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isConnected) {
+      setError('Unable to create topic. Please check your connection.');
+      return;
+    }
     try {
       const topicId = await backend.createTopic(categoryId!, newTopic.title, newTopic.content);
       setTopics([...topics, { ...newTopic, id: topicId, categoryId: categoryId!, createdAt: BigInt(Date.now()) }]);
@@ -157,6 +193,7 @@ const Category: React.FC = () => {
     }
   };
 
+  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
@@ -187,7 +224,7 @@ const Category: React.FC = () => {
           value={newTopic.content}
           onChange={(e) => setNewTopic({ ...newTopic, content: e.target.value })}
         />
-        <button type="submit">Create Topic</button>
+        <Button type="submit" variant="contained" color="primary">Create Topic</Button>
       </form>
     </Box>
   );
@@ -199,9 +236,11 @@ const Topic: React.FC = () => {
   const [newReply, setNewReply] = useState({ content: '', parentReplyId: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isConnected } = useBackendConnection();
 
   useEffect(() => {
     const fetchReplies = async () => {
+      if (!isConnected) return;
       try {
         setLoading(true);
         const result = await backend.getReplies(topicId!);
@@ -215,10 +254,14 @@ const Topic: React.FC = () => {
       }
     };
     fetchReplies();
-  }, [topicId]);
+  }, [topicId, isConnected]);
 
   const handleCreateReply = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isConnected) {
+      setError('Unable to create reply. Please check your connection.');
+      return;
+    }
     try {
       const replyId = await backend.createReply(topicId!, newReply.content, newReply.parentReplyId);
       setReplies([...replies, { ...newReply, id: replyId, topicId: topicId!, createdAt: BigInt(Date.now()) }]);
@@ -236,15 +279,16 @@ const Topic: React.FC = () => {
         .map((reply) => (
           <Box key={reply.id} className="reply">
             <Typography>{reply.content}</Typography>
-            <button onClick={() => setNewReply({ ...newReply, parentReplyId: reply.id })}>
+            <Button onClick={() => setNewReply({ ...newReply, parentReplyId: reply.id })}>
               Reply
-            </button>
+            </Button>
             {renderReplies(reply.id, depth + 1)}
           </Box>
         ))}
     </Box>
   );
 
+  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
@@ -259,7 +303,7 @@ const Topic: React.FC = () => {
           value={newReply.content}
           onChange={(e) => setNewReply({ ...newReply, content: e.target.value })}
         />
-        <button type="submit">Post Reply</button>
+        <Button type="submit" variant="contained" color="primary">Post Reply</Button>
       </form>
     </Box>
   );

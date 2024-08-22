@@ -139,8 +139,8 @@ actor {
   };
 
   // Health check
-  public query func healthCheck() : async Text {
-    "OK"
+  public query func ping() : async Text {
+    "pong"
   };
 
   // System functions
