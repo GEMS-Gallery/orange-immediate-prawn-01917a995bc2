@@ -4,6 +4,7 @@ export const idlFactory = ({ IDL }) => {
   const ReplyId = IDL.Text;
   const Category = IDL.Record({
     'id' : CategoryId,
+    'icon' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
@@ -23,7 +24,11 @@ export const idlFactory = ({ IDL }) => {
     'createdAt' : Time,
   });
   return IDL.Service({
-    'createCategory' : IDL.Func([IDL.Text, IDL.Text], [CategoryId], []),
+    'createCategory' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text],
+        [CategoryId],
+        [],
+      ),
     'createReply' : IDL.Func(
         [TopicId, IDL.Text, IDL.Opt(ReplyId)],
         [ReplyId],

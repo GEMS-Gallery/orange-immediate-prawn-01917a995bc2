@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { backend } from 'declarations/backend';
+import { Box, Card, CardContent, Typography, Grid, Icon } from '@mui/material';
+import * as Icons from '@mui/icons-material';
 
 interface Category {
   id: string;
   name: string;
   description: string;
+  icon: string;
 }
 
 interface Topic {
@@ -26,7 +29,6 @@ interface Reply {
 
 const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,51 +49,30 @@ const Home: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const categoryId = await backend.createCategory(newCategory.name, newCategory.description);
-      setCategories([...categories, { ...newCategory, id: categoryId }]);
-      setNewCategory({ name: '', description: '' });
-    } catch (err) {
-      setError('Failed to create category. Please try again.');
-    }
-  };
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <Box>Loading...</Box>;
+  if (error) return <Box>{error}</Box>;
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1>Hacker Forum</h1>
-        <p>Welcome to the underground</p>
-      </header>
-      <div className="categories">
+    <Box className="container">
+      <Box className="header">
+        <Typography variant="h1">Hacker Forum</Typography>
+        <Typography variant="subtitle1">Welcome to the underground</Typography>
+      </Box>
+      <Grid container spacing={3} className="categories">
         {categories.map((category) => (
-          <div key={category.id} className="category">
-            <h2>{category.name}</h2>
-            <p>{category.description}</p>
-            <Link to={`/category/${category.id}`}>Enter</Link>
-          </div>
+          <Grid item xs={12} sm={6} md={4} key={category.id}>
+            <Card className="category">
+              <CardContent>
+                <Icon component={(Icons as any)[category.icon]} fontSize="large" />
+                <Typography variant="h5">{category.name}</Typography>
+                <Typography variant="body2">{category.description}</Typography>
+                <Link to={`/category/${category.id}`}>Enter</Link>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
-      </div>
-      <form onSubmit={handleCreateCategory}>
-        <h3>Create New Category</h3>
-        <input
-          type="text"
-          placeholder="Category Name"
-          value={newCategory.name}
-          onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-        />
-        <textarea
-          placeholder="Category Description"
-          value={newCategory.description}
-          onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
-        />
-        <button type="submit">Create Category</button>
-      </form>
-    </div>
+      </Grid>
+    </Box>
   );
 };
 
@@ -129,23 +110,25 @@ const Category: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <Box>Loading...</Box>;
+  if (error) return <Box>{error}</Box>;
 
   return (
-    <div className="container">
-      <h2>Topics</h2>
-      <div className="topics">
+    <Box className="container">
+      <Typography variant="h2">Topics</Typography>
+      <Box className="topics">
         {topics.map((topic) => (
-          <div key={topic.id} className="topic">
-            <h3>{topic.title}</h3>
-            <p>{topic.content}</p>
-            <Link to={`/topic/${topic.id}`}>View Replies</Link>
-          </div>
+          <Card key={topic.id} className="topic">
+            <CardContent>
+              <Typography variant="h5">{topic.title}</Typography>
+              <Typography variant="body2">{topic.content}</Typography>
+              <Link to={`/topic/${topic.id}`}>View Replies</Link>
+            </CardContent>
+          </Card>
         ))}
-      </div>
+      </Box>
       <form onSubmit={handleCreateTopic}>
-        <h3>Create New Topic</h3>
+        <Typography variant="h3">Create New Topic</Typography>
         <input
           type="text"
           placeholder="Topic Title"
@@ -159,7 +142,7 @@ const Category: React.FC = () => {
         />
         <button type="submit">Create Topic</button>
       </form>
-    </div>
+    </Box>
   );
 };
 
@@ -198,30 +181,30 @@ const Topic: React.FC = () => {
   };
 
   const renderReplies = (parentId: string | null = null, depth: number = 0): JSX.Element => (
-    <div className="replies" style={{ marginLeft: `${depth * 20}px` }}>
+    <Box className="replies" style={{ marginLeft: `${depth * 20}px` }}>
       {replies
         .filter((reply) => reply.parentReplyId === parentId)
         .map((reply) => (
-          <div key={reply.id} className="reply">
-            <p>{reply.content}</p>
+          <Box key={reply.id} className="reply">
+            <Typography>{reply.content}</Typography>
             <button onClick={() => setNewReply({ ...newReply, parentReplyId: reply.id })}>
               Reply
             </button>
             {renderReplies(reply.id, depth + 1)}
-          </div>
+          </Box>
         ))}
-    </div>
+    </Box>
   );
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <Box>Loading...</Box>;
+  if (error) return <Box>{error}</Box>;
 
   return (
-    <div className="container">
-      <h2>Replies</h2>
+    <Box className="container">
+      <Typography variant="h2">Replies</Typography>
       {renderReplies()}
       <form onSubmit={handleCreateReply}>
-        <h3>Post a Reply</h3>
+        <Typography variant="h3">Post a Reply</Typography>
         <textarea
           placeholder="Your Reply"
           value={newReply.content}
@@ -229,7 +212,7 @@ const Topic: React.FC = () => {
         />
         <button type="submit">Post Reply</button>
       </form>
-    </div>
+    </Box>
   );
 };
 

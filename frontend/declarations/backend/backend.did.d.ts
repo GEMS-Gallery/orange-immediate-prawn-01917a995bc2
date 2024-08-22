@@ -4,6 +4,7 @@ import type { IDL } from '@dfinity/candid';
 
 export interface Category {
   'id' : CategoryId,
+  'icon' : string,
   'name' : string,
   'description' : string,
 }
@@ -26,7 +27,7 @@ export interface Topic {
 }
 export type TopicId = string;
 export interface _SERVICE {
-  'createCategory' : ActorMethod<[string, string], CategoryId>,
+  'createCategory' : ActorMethod<[string, string, string], CategoryId>,
   'createReply' : ActorMethod<[TopicId, string, [] | [ReplyId]], ReplyId>,
   'createTopic' : ActorMethod<[CategoryId, string, string], TopicId>,
   'ensureDefaultCategories' : ActorMethod<[], undefined>,

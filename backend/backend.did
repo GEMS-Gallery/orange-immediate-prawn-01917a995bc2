@@ -21,11 +21,12 @@ type CategoryId = text;
 type Category = 
  record {
    description: text;
+   icon: text;
    id: CategoryId;
    name: text;
  };
 service : {
-  createCategory: (text, text) -> (CategoryId);
+  createCategory: (text, text, text) -> (CategoryId);
   createReply: (TopicId, text, opt ReplyId) -> (ReplyId);
   createTopic: (CategoryId, text, text) -> (TopicId);
   ensureDefaultCategories: () -> ();

@@ -20,6 +20,7 @@ actor {
     id: CategoryId;
     name: Text;
     description: Text;
+    icon: Text;
   };
 
   type Topic = {
@@ -55,11 +56,12 @@ actor {
   // Initialize data
   func initializeDefaultCategories() {
     let defaultCategories = [
-      { id = generateId("category"); name = "Web Application Security"; description = "Discuss vulnerabilities and security measures in web applications." },
-      { id = generateId("category"); name = "Network Penetration Testing"; description = "Share techniques and tools for network penetration testing." },
-      { id = generateId("category"); name = "Malware Analysis"; description = "Analyze and discuss various types of malware and their behaviors." },
-      { id = generateId("category"); name = "Cryptography"; description = "Explore encryption algorithms, protocols, and their implementations." },
-      { id = generateId("category"); name = "Social Engineering"; description = "Discuss psychological manipulation techniques used in hacking." }
+      { id = generateId("category"); name = "Application Security"; description = "Discuss vulnerabilities and security measures in applications."; icon = "security" },
+      { id = generateId("category"); name = "Red Team Operations"; description = "Explore offensive security techniques and strategies."; icon = "gavel" },
+      { id = generateId("category"); name = "Network Security"; description = "Analyze and discuss network security protocols and tools."; icon = "wifi" },
+      { id = generateId("category"); name = "Cryptography"; description = "Explore encryption algorithms and cryptographic systems."; icon = "enhanced_encryption" },
+      { id = generateId("category"); name = "Malware Analysis"; description = "Dissect and understand various types of malicious software."; icon = "bug_report" },
+      { id = generateId("category"); name = "Social Engineering"; description = "Discuss psychological manipulation techniques in cybersecurity."; icon = "psychology" }
     ];
     for (category in defaultCategories.vals()) {
       categories.put(category.id, category);
@@ -88,12 +90,13 @@ actor {
     Iter.toArray(categories.vals())
   };
 
-  public shared func createCategory(name: Text, description: Text) : async CategoryId {
+  public shared func createCategory(name: Text, description: Text, icon: Text) : async CategoryId {
     let id = generateId("category");
     let category: Category = {
       id = id;
       name = name;
       description = description;
+      icon = icon;
     };
     categories.put(id, category);
     id
