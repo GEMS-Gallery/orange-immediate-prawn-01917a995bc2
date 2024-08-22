@@ -1,0 +1,33 @@
+type TopicId = text;
+type Topic = 
+ record {
+   categoryId: CategoryId;
+   content: text;
+   createdAt: Time;
+   id: TopicId;
+   title: text;
+ };
+type Time = int;
+type ReplyId = text;
+type Reply = 
+ record {
+   content: text;
+   createdAt: Time;
+   id: ReplyId;
+   parentReplyId: opt ReplyId;
+   topicId: TopicId;
+ };
+type CategoryId = text;
+type Category = 
+ record {
+   description: text;
+   id: CategoryId;
+   name: text;
+ };
+service : {
+  createReply: (TopicId, text, opt ReplyId) -> (ReplyId);
+  createTopic: (CategoryId, text, text) -> (TopicId);
+  getCategories: () -> (vec Category) query;
+  getReplies: (TopicId) -> (vec Reply) query;
+  getTopics: (CategoryId) -> (vec Topic) query;
+}

@@ -1,0 +1,37 @@
+export const idlFactory = ({ IDL }) => {
+  const TopicId = IDL.Text;
+  const ReplyId = IDL.Text;
+  const CategoryId = IDL.Text;
+  const Category = IDL.Record({
+    'id' : CategoryId,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Time = IDL.Int;
+  const Reply = IDL.Record({
+    'id' : ReplyId,
+    'content' : IDL.Text,
+    'createdAt' : Time,
+    'parentReplyId' : IDL.Opt(ReplyId),
+    'topicId' : TopicId,
+  });
+  const Topic = IDL.Record({
+    'id' : TopicId,
+    'categoryId' : CategoryId,
+    'title' : IDL.Text,
+    'content' : IDL.Text,
+    'createdAt' : Time,
+  });
+  return IDL.Service({
+    'createReply' : IDL.Func(
+        [TopicId, IDL.Text, IDL.Opt(ReplyId)],
+        [ReplyId],
+        [],
+      ),
+    'createTopic' : IDL.Func([CategoryId, IDL.Text, IDL.Text], [TopicId], []),
+    'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
+    'getReplies' : IDL.Func([TopicId], [IDL.Vec(Reply)], ['query']),
+    'getTopics' : IDL.Func([CategoryId], [IDL.Vec(Topic)], ['query']),
+  });
+};
+export const init = ({ IDL }) => { return []; };
