@@ -9,6 +9,7 @@ import Nat "mo:base/Nat";
 import Option "mo:base/Option";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
+import Debug "mo:base/Debug";
 
 actor {
   // Types
@@ -87,10 +88,12 @@ actor {
 
   // Public functions
   public query func getCategories() : async [Category] {
+    Debug.print("Fetching categories");
     Iter.toArray(categories.vals())
   };
 
   public shared func createCategory(name: Text, description: Text, icon: Text) : async CategoryId {
+    Debug.print("Creating category: " # name);
     let id = generateId("category");
     let category: Category = {
       id = id;
@@ -103,11 +106,13 @@ actor {
   };
 
   public query func getTopics(categoryId: CategoryId) : async [Topic] {
+    Debug.print("Fetching topics for category: " # categoryId);
     Iter.toArray(topics.vals())
       |> Array.filter(_, func (t: Topic) : Bool { t.categoryId == categoryId })
   };
 
   public shared func createTopic(categoryId: CategoryId, title: Text, content: Text) : async TopicId {
+    Debug.print("Creating topic in category: " # categoryId);
     let id = generateId("topic");
     let topic: Topic = {
       id = id;
@@ -121,11 +126,13 @@ actor {
   };
 
   public query func getReplies(topicId: TopicId) : async [Reply] {
+    Debug.print("Fetching replies for topic: " # topicId);
     Iter.toArray(replies.vals())
       |> Array.filter(_, func (r: Reply) : Bool { r.topicId == topicId })
   };
 
   public shared func createReply(topicId: TopicId, content: Text, parentReplyId: ?ReplyId) : async ReplyId {
+    Debug.print("Creating reply for topic: " # topicId);
     let id = generateId("reply");
     let reply: Reply = {
       id = id;

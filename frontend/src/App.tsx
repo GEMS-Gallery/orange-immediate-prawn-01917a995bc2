@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory } from 'declarations/backend/backend.did.js';
@@ -56,26 +56,26 @@ const useBackendConnection = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const result = await backend.ping();
-        setIsConnected(result === 'pong');
-      } catch (error) {
-        console.error('Backend connection error:', error);
-        setIsConnected(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const checkConnection = useCallback(async () => {
+    try {
+      const result = await backend.ping();
+      setIsConnected(result === 'pong');
+    } catch (error) {
+      console.error('Backend connection error:', error);
+      setIsConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     checkConnection();
     const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [checkConnection]);
 
-  return { isConnected, isLoading };
+  return { isConnected, isLoading, checkConnection };
 };
 
 const Home: React.FC = () => {
@@ -83,36 +83,42 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const { isConnected, isLoading } = useBackendConnection();
+  const { isConnected, isLoading, checkConnection } = useBackendConnection();
+
+  const fetchCategories = useCallback(async () => {
+    if (!isConnected) return;
+    try {
+      setLoading(true);
+      await backend.ensureDefaultCategories();
+      const result = await backend.getCategories();
+      setCategories(result);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Failed to fetch categories. Please try again.');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [isConnected]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      if (!isConnected) return;
-      try {
-        setLoading(true);
-        await backend.ensureDefaultCategories();
-        const result = await backend.getCategories();
-        setCategories(result);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to fetch categories. Please try again.');
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCategories();
-  }, [isConnected]);
+  }, [fetchCategories]);
 
   const retryFetch = () => {
     setError(null);
     setLoading(true);
-    fetchCategories();
+    checkConnection().then(() => fetchCategories());
   };
 
   if (isLoading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
-  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
+  if (!isConnected) return (
+    <Box>
+      Unable to connect to the backend. Please check your internet connection and try again.
+      <Button onClick={checkConnection}>Retry Connection</Button>
+    </Box>
+  );
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return (
     <Box>
@@ -157,25 +163,26 @@ const Category: React.FC = () => {
   const [newTopic, setNewTopic] = useState({ title: '', content: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isConnected } = useBackendConnection();
+  const { isConnected, checkConnection } = useBackendConnection();
+
+  const fetchTopics = useCallback(async () => {
+    if (!isConnected) return;
+    try {
+      setLoading(true);
+      const result = await backend.getTopics(categoryId!);
+      setTopics(result);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching topics:', err);
+      setError('Failed to fetch topics. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryId, isConnected]);
 
   useEffect(() => {
-    const fetchTopics = async () => {
-      if (!isConnected) return;
-      try {
-        setLoading(true);
-        const result = await backend.getTopics(categoryId!);
-        setTopics(result);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching topics:', err);
-        setError('Failed to fetch topics. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTopics();
-  }, [categoryId, isConnected]);
+  }, [fetchTopics]);
 
   const handleCreateTopic = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,7 +200,12 @@ const Category: React.FC = () => {
     }
   };
 
-  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
+  if (!isConnected) return (
+    <Box>
+      Unable to connect to the backend. Please check your internet connection and try again.
+      <Button onClick={checkConnection}>Retry Connection</Button>
+    </Box>
+  );
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
@@ -236,25 +248,26 @@ const Topic: React.FC = () => {
   const [newReply, setNewReply] = useState({ content: '', parentReplyId: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isConnected } = useBackendConnection();
+  const { isConnected, checkConnection } = useBackendConnection();
+
+  const fetchReplies = useCallback(async () => {
+    if (!isConnected) return;
+    try {
+      setLoading(true);
+      const result = await backend.getReplies(topicId!);
+      setReplies(result);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching replies:', err);
+      setError('Failed to fetch replies. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [topicId, isConnected]);
 
   useEffect(() => {
-    const fetchReplies = async () => {
-      if (!isConnected) return;
-      try {
-        setLoading(true);
-        const result = await backend.getReplies(topicId!);
-        setReplies(result);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching replies:', err);
-        setError('Failed to fetch replies. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchReplies();
-  }, [topicId, isConnected]);
+  }, [fetchReplies]);
 
   const handleCreateReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,7 +301,12 @@ const Topic: React.FC = () => {
     </Box>
   );
 
-  if (!isConnected) return <Box>Unable to connect to the backend. Please check your internet connection and try again.</Box>;
+  if (!isConnected) return (
+    <Box>
+      Unable to connect to the backend. Please check your internet connection and try again.
+      <Button onClick={checkConnection}>Retry Connection</Button>
+    </Box>
+  );
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
