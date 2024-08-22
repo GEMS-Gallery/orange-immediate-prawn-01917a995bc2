@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
 import { backend } from 'declarations/backend';
-import { Box, Card, CardContent, Typography, Grid, Icon } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, Icon, CircularProgress } from '@mui/material';
 import * as Icons from '@mui/icons-material';
 
 interface Category {
@@ -27,6 +27,26 @@ interface Reply {
   createdAt: bigint;
 }
 
+const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const errorHandler = (error: ErrorEvent) => {
+      console.error('Uncaught error:', error);
+      setHasError(true);
+    };
+
+    window.addEventListener('error', errorHandler);
+    return () => window.removeEventListener('error', errorHandler);
+  }, []);
+
+  if (hasError) {
+    return <Box>Something went wrong. Please refresh the page and try again.</Box>;
+  }
+
+  return <>{children}</>;
+};
+
 const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +61,7 @@ const Home: React.FC = () => {
         setCategories(result);
         setError(null);
       } catch (err) {
+        console.error('Error fetching categories:', err);
         setError('Failed to fetch categories. Please try again.');
       } finally {
         setLoading(false);
@@ -49,7 +70,7 @@ const Home: React.FC = () => {
     fetchCategories();
   }, []);
 
-  if (loading) return <Box>Loading...</Box>;
+  if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
   return (
@@ -91,6 +112,7 @@ const Category: React.FC = () => {
         setTopics(result);
         setError(null);
       } catch (err) {
+        console.error('Error fetching topics:', err);
         setError('Failed to fetch topics. Please try again.');
       } finally {
         setLoading(false);
@@ -106,11 +128,12 @@ const Category: React.FC = () => {
       setTopics([...topics, { ...newTopic, id: topicId, categoryId: categoryId!, createdAt: BigInt(Date.now()) }]);
       setNewTopic({ title: '', content: '' });
     } catch (err) {
+      console.error('Error creating topic:', err);
       setError('Failed to create topic. Please try again.');
     }
   };
 
-  if (loading) return <Box>Loading...</Box>;
+  if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
   return (
@@ -161,6 +184,7 @@ const Topic: React.FC = () => {
         setReplies(result);
         setError(null);
       } catch (err) {
+        console.error('Error fetching replies:', err);
         setError('Failed to fetch replies. Please try again.');
       } finally {
         setLoading(false);
@@ -176,6 +200,7 @@ const Topic: React.FC = () => {
       setReplies([...replies, { ...newReply, id: replyId, topicId: topicId!, createdAt: BigInt(Date.now()) }]);
       setNewReply({ content: '', parentReplyId: null });
     } catch (err) {
+      console.error('Error creating reply:', err);
       setError('Failed to create reply. Please try again.');
     }
   };
@@ -196,7 +221,7 @@ const Topic: React.FC = () => {
     </Box>
   );
 
-  if (loading) return <Box>Loading...</Box>;
+  if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
   if (error) return <Box>{error}</Box>;
 
   return (
@@ -218,11 +243,13 @@ const Topic: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/category/:categoryId" element={<Category />} />
-      <Route path="/topic/:topicId" element={<Topic />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/category/:categoryId" element={<Category />} />
+        <Route path="/topic/:topicId" element={<Topic />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };
 
